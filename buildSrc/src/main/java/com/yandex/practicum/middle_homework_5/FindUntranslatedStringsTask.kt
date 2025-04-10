@@ -9,50 +9,62 @@ import javax.xml.parsers.DocumentBuilderFactory
 abstract class FindUntranslatedStringsTask : DefaultTask() {
     @TaskAction
     fun findUntranslatedStrings() {
-        val resDir = File(project.projectDir, "src/main/res")
-        val defaultStrings = File(resDir, "values/strings.xml")
+        val resDir = File(project.projectDir, RESOURCES_PATH)
+
+        val defaultStrings = File(resDir, "$DEFAULT_VALUES_FOLDER/$STRINGS_FILE_NAME")
         val defaultStringsFromXml = DocumentBuilderFactory
             .newInstance()
             .newDocumentBuilder()
             .parse(defaultStrings)
             .getElementsByTagName("string")
-        val defaultStringIdentities = defaultStringsFromXml.let { nodeList ->
-            (0 until nodeList.length).map { i ->
-                val node = nodeList.item(i)
-                val name = node.attributes?.getNamedItem("name")?.nodeValue ?: ""
-                name
-            }
+
+        val defaultStringIdentities = (0 until defaultStringsFromXml.length).map { i ->
+            val node = defaultStringsFromXml.item(i)
+            node.attributes?.getNamedItem("name")?.nodeValue ?: ""
         }
-        val fileName = "strings.xml"
+
+        val fileName = STRINGS_FILE_NAME
         val foldersStartingWithValues = resDir.listFiles { file ->
             file.isDirectory && file.name.startsWith("values-")
-                    && file.listFiles()?.any { it.isFile && it.name == fileName } ?: false
+                    && (file.listFiles()?.any { it.isFile && it.name == fileName } == true)
         }
+
+        val stringBuilderErrorText = StringBuilder("Missing translations").appendLine()
+        var missingTranslationsFound = false
+
         foldersStartingWithValues?.let { array ->
-            val stringBuilderErrorText = StringBuilder("Missing translations").append(System.lineSeparator())
             for (folder in array) {
-                val strings = File(resDir, "${folder.name}/strings.xml")
+                val stringsFile = File(resDir, "${folder.name}/$STRINGS_FILE_NAME")
                 val stringsFromXml = DocumentBuilderFactory
                     .newInstance()
                     .newDocumentBuilder()
-                    .parse(strings)
+                    .parse(stringsFile)
                     .getElementsByTagName("string")
-                val stringIdentities = stringsFromXml.let { nodeList ->
-                    (0 until nodeList.length).map { i ->
-                        val node = nodeList.item(i)
-                        val name = node.attributes?.getNamedItem("name")?.nodeValue ?: ""
-                        name
-                    }
+
+                val stringIdentities = (0 until stringsFromXml.length).map { i ->
+                    val node = stringsFromXml.item(i)
+                    node.attributes?.getNamedItem("name")?.nodeValue ?: ""
                 }
+
                 defaultStringIdentities.forEach { missing ->
                     if (!stringIdentities.contains(missing)) {
+                        missingTranslationsFound = true
                         stringBuilderErrorText
                             .append("=== $missing in ${folder.name} ===")
-                            .append(System.lineSeparator())
+                            .appendLine()
                     }
                 }
             }
+        }
+
+        if (missingTranslationsFound) {
             throw GradleException(stringBuilderErrorText.toString())
         }
+    }
+
+    private companion object {
+        const val RESOURCES_PATH = "src/main/res"
+        const val DEFAULT_VALUES_FOLDER = "values"
+        const val STRINGS_FILE_NAME = "strings.xml"
     }
 }
