@@ -7,21 +7,12 @@ import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
 abstract class FindUntranslatedStringsTask : DefaultTask() {
+
     @TaskAction
     fun findUntranslatedStrings() {
         val resDir = File(project.projectDir, RESOURCES_PATH)
-
         val defaultStrings = File(resDir, "$DEFAULT_VALUES_FOLDER/$STRINGS_FILE_NAME")
-        val defaultStringsFromXml = DocumentBuilderFactory
-            .newInstance()
-            .newDocumentBuilder()
-            .parse(defaultStrings)
-            .getElementsByTagName("string")
-
-        val defaultStringIdentities = (0 until defaultStringsFromXml.length).map { i ->
-            val node = defaultStringsFromXml.item(i)
-            node.attributes?.getNamedItem("name")?.nodeValue ?: ""
-        }
+        val defaultStringIdentities = extractStringNames(defaultStrings)
 
         val fileName = STRINGS_FILE_NAME
         val foldersStartingWithValues = resDir.listFiles { file ->
@@ -35,16 +26,7 @@ abstract class FindUntranslatedStringsTask : DefaultTask() {
         foldersStartingWithValues?.let { array ->
             for (folder in array) {
                 val stringsFile = File(resDir, "${folder.name}/$STRINGS_FILE_NAME")
-                val stringsFromXml = DocumentBuilderFactory
-                    .newInstance()
-                    .newDocumentBuilder()
-                    .parse(stringsFile)
-                    .getElementsByTagName("string")
-
-                val stringIdentities = (0 until stringsFromXml.length).map { i ->
-                    val node = stringsFromXml.item(i)
-                    node.attributes?.getNamedItem("name")?.nodeValue ?: ""
-                }
+                val stringIdentities = extractStringNames(stringsFile)
 
                 defaultStringIdentities.forEach { missing ->
                     if (!stringIdentities.contains(missing)) {
@@ -59,6 +41,19 @@ abstract class FindUntranslatedStringsTask : DefaultTask() {
 
         if (missingTranslationsFound) {
             throw GradleException(stringBuilderErrorText.toString())
+        }
+    }
+
+    private fun extractStringNames(file: File): List<String> {
+        val nodeList = DocumentBuilderFactory
+            .newInstance()
+            .newDocumentBuilder()
+            .parse(file)
+            .getElementsByTagName("string")
+
+        return (0 until nodeList.length).map { i ->
+            val node = nodeList.item(i)
+            node.attributes?.getNamedItem("name")?.nodeValue ?: ""
         }
     }
 
