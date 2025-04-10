@@ -63,4 +63,4 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-kapt = { id = "kotlin-kapt" }
 android-library = { id = "com.android.library", version.ref = "agp" }
 jetbrains-kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "jetbrainsKotlinJvm" }
-untranslated = { id = "com.yandex.practicum.middle_homework_5.gradle_plugins.find-untranslated-plugin"}
+untranslated = { id = "find_untranslated_strings_plugin"}
