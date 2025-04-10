@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="periodic_refresh_minutes">Период обновления данных(минуты)</string>
+    <string name="delay_first_launch_sec">Отсрочка первого обновления(секунды)</string>
+</resources>
