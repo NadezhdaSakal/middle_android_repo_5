@@ -8,8 +8,9 @@ dependencies{
 
 allprojects {
     repositories {
+        google()
         mavenCentral()
-    }
+        gradlePluginPortal() }
 }
 
 gradlePlugin {
